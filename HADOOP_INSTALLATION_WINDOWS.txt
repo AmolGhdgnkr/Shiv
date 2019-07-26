@@ -1,0 +1,158 @@
+
+1. Download Binary Tarball (tar.gz) of Latest Version from:
+	https://hadoop.apache.org/releases.html
+	
+2. Make sure JDK is installed on your System.
+
+ In System Properties > Environment Variables > User Variables: 
+ 
+	i. Create & Set the Variable: JAVA_HOME, pointing to the installed JDK, **just short of the 'bin' Directory**, similar to: 
+			C:\Program Files\Java\jdk1.8.0_221
+			
+	ii. To the PATH Variable: Add the above Path + '\bin'
+
+3. Unzip the Hadoop Tarball inside a Folder named like: 'hadoop-2.8.0' directly on C-Drive.
+
+	In System-Properties > Environment Variables > User Variables: 
+	
+			i. Create & Set the Variable: HADOOP_HOME, pointing to the installed Hadoop's **bin** Directory: 
+					C:\hadoop-2.8.0\bin
+			
+			ii. To the PATH Variable: Add the Path to Hadoop's **sbin** Directory:
+					C:\hadoop-2.8.0\sbin
+			
+			This Folder contains: Executables for Linux and Command-Files for Windows.
+			
+4. Go to: 
+		C:\hadoop-2.8.0\etc\hadoop
+	
+	We need to modify four different XML Files here.
+	
+	i. core-site.xml: 
+				Inside the <configuration> Node: Add the following Node (that is used by both, namenode and datanode)...
+				(Using XML Notepad 2007: To <configuration> node: Right-Click > Element > Child. Name it 'property'.)
+									<property>
+										<name>fs.defaultFS</name>
+										<value>hdfs://localhost:9000</value>
+									</property>
+	
+	ii. mapred-site.xml.template:
+				Make a Copy of this Template File and then remove the Extension 'template' of the Copy to convert it into an XML File.
+				
+				Inside the <configuration> Node: Add the following Node...
+									<property>
+										<name>mapreduce.framework.name</name>
+										<value>yarn</value>
+									</property>
+		
+				Here: 'yarn' is the Name of the Framework that is used to execute MapReduce.
+				
+	iii. hdfs-site.xml:
+			To do that, first, go back to:
+			C:\hadoop-2.8.0
+	
+			Create a Directory 'data' here.
+			Inside 'data' create two more: 1. datanode (for blocks of any Files pushed in the datanode.)
+														2. namenode (for fs-Images)
+														
+			Now, go to:
+				C:\hadoop-2.8.0\etc\hadoop
+				
+			Open the hdfs-site.xml file.
+			
+			In the <configuration> Node, create THREE <property> Nodes as follows:
+				<property>
+					<name>dfs.replication</name>
+					<value>1</value> <!-- How many times do I want Hadoop to replicate my Data. -->
+				</property>
+			
+				<property>
+					<name>dfs.namenode.name.dir</name>
+					<value>C:\hadoop-2.8.0\data\namenode</value> <!-- Copy-Paste the Path for the 'namenode' Directory -->
+				</property>
+				
+				<property>
+					<name>dfs.datanode.data.dir</name>
+					<value>C:\hadoop-2.8.0\data\datanode</value> <!-- Copy-Paste the Path for the 'datanode' Directory -->
+				</property>
+			
+	iv. yarn-site.xml:
+			Go to:
+				C:\hadoop-2.8.0\etc\hadoop
+			
+			Open yarn-site.xml file.
+			
+			In the <configuration> Node, create TWO <property> Nodes as follows:
+			
+			<!-- Both define which Class will be used to shuffle our Data. Package used: defined in the second Node. -->
+			
+			<property>
+					<name>yarn.nodemanager.aux-services</name>
+					<value>mapreduce_shuffle</value>
+			</property>
+			
+			<property>
+					<name>yarn.nodemanager.aux-services.mapreduce.shuffle.class</name>
+					<value>org.apache.hadoop.mapred.ShuffleHandler</value>
+			</property>
+			
+5. Open the hadoop-env.cmd file in Notepad++.
+	Copy-Paste hard-coded Path of JDK as follows:
+	
+	(NOTE!!!: THERE SHOULD NO SPACE IN THE PATH-NAME OF JAVA_HOME. USUALLY THE JAVA FOLDER IS INSIDE 'PROGRAM FILES' FOLDER AND THERE IS A SPACE BETWEEN THE WORDS 'PROGRAM FILES' AND HENCE IT WILL THROW AN ERROR FOR SOME FILES:
+	'JAVA_HOME INCORRECTLY SET.'
+	SOLUTION: JUST COPY-PASTE THE ENTIRE JAVA FOLDER OUTSIDE OF THE 'PROGRAM FILES' FOLDER)
+	AND NOW SET JAVA_HOME IN hadoop-env.cmd AS: 
+	set JAVA_HOME=C:\Java\jdk1.8.0_221
+	
+6. Copy all the Files from 'Hadoop-on-Windows Custom bin-files' Folder and Paste them in the 'bin' Folder of Hadoop. Replace all the required Files.
+
+7. Open Command Prompt and run the Command:
+	hdfs namenode -format
+	
+	Now the Datanodes and Namenode Locations are cleared-off or formatted.
+	
+8. Next, in Command Prompt, run: start-all Command present in the 'sbin' Folder.
+	It will run all the Processes: namenode, datanode, Yarn ResourceManager and the Yarn NodeManager. 
+	OR
+	Start the Processes individually by calling each:
+	start-dfs, start-yarn Commands and others
+
+9. Open the Browser and run the following: 
+	http://localhost:8088
+	
+	Resource-Manager starts up and all the MapReduce Programs that are executed in the System are visible here.
+
+10. For **namenode-UI**, run the Following in the Browser:
+	http://localhost:50070
+	
+	It displays the overall Summary of the Cluster.
+	
+11. Now push some Sample Files in this Hadoop Location.
+		
+		i. First, make an Input Directory where the Sample-File will be pushed.
+			hadoop fs -mkdir /My_Input_Dir
+		
+		ii. Push a File (HERE: a Text Document with some Content).
+			hadoop fs -put C:/MyFile.txt /My_Input_Dir
+			
+		iii. Verify:
+			hadoop fs -ls /My_Input_Dir/*
+			
+		iv. See Contents of the File:
+			hadoop dfs -cat /My_Input_Dir/MyFile.txt
+		
+		v. To remove Safe-Mode:
+		
+		vi. To remove Directory:
+			hadoop dfsadmin -safemode leave
+		
+		vii. To remove the Directory, remove the File first:
+			hadoop fs -rm -r /My_Input_Dir/MyFile.txt
+		
+		viii. Remove the Directory:
+			hadoop fs -rm -r /My_Input_Dir
+		
+		----------------------------
+		
+		THAT'S IT.
